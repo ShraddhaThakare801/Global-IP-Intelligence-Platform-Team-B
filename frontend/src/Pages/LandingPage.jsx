@@ -19,7 +19,6 @@ export default function Landing() {
       {/* ================= NAVBAR ================= */}
       <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-black/40 border-b border-white/20 transition duration-500 hover:bg-indigo-900/90">
         <div className="flex justify-between items-center px-6 md:px-12 py-4">
-
           {/* Logo */}
           <h1
             onClick={() => navigate("/")}
@@ -32,25 +31,15 @@ export default function Landing() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex gap-8 font-medium text-white">
-
-            {/* Login */}
             <button
               onClick={() => navigate("/login")}
-              className="relative transition duration-300 
-                         hover:text-indigo-300
-                         after:content-[''] after:absolute after:left-0 after:-bottom-1 
-                         after:h-[2px] after:w-0 after:bg-indigo-300 
-                         after:transition-all after:duration-300 
-                         hover:after:w-full"
+              className="relative transition duration-300 hover:text-indigo-300"
             >
               Login
             </button>
-
-            {/* Register */}
             <button
               onClick={() => navigate("/register")}
-              className="px-5 py-2 border border-white rounded-lg relative
-                         transition-all duration-300
+              className="px-5 py-2 border border-white rounded-lg transition-all duration-300
                          hover:bg-indigo-600 hover:border-indigo-600 hover:text-white
                          hover:shadow-xl hover:-translate-y-1 active:scale-95"
             >
@@ -72,16 +61,10 @@ export default function Landing() {
         {/* Mobile Dropdown */}
         {menuOpen && (
           <div className="md:hidden bg-black/90 text-white flex flex-col items-center gap-4 py-4">
-            <button
-              onClick={() => navigate("/login")}
-              className="hover:text-indigo-300 transition"
-            >
+            <button onClick={() => navigate("/login")} className="hover:text-indigo-300 transition">
               Login
             </button>
-            <button
-              onClick={() => navigate("/register")}
-              className="hover:text-indigo-300 transition"
-            >
+            <button onClick={() => navigate("/register")} className="hover:text-indigo-300 transition">
               Register
             </button>
           </div>
@@ -90,40 +73,51 @@ export default function Landing() {
 
       {/* ================= HERO SECTION ================= */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center min-h-screen px-6 pt-32 pb-24">
-
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white leading-tight mb-6 max-w-4xl">
           Empowering Global Intellectual Property Insights
         </h1>
 
-        <p className="text-base sm:text-lg text-gray-200 mb-8 max-w-2xl">
+        <p className="text-base sm:text-lg text-gray-200 mb-6 max-w-2xl">
           Analyze, monitor and manage intellectual property data securely
           through a powerful enterprise-grade intelligence platform.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-12">
+        {/* Trust Signals */}
+        <p className="text-sm text-indigo-300 mb-8">
+          🔒 Secure • 🌍 Global Reach • 🏢 Enterprise-Grade
+        </p>
 
-          {/* Get Started Button */}
+        {/* Feature Highlights */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12 max-w-4xl">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
+            <h3 className="text-lg font-semibold text-indigo-200">Search Patents</h3>
+            <p className="text-sm text-gray-300">Find patents worldwide with advanced filters.</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
+            <h3 className="text-lg font-semibold text-indigo-200">Monitor Trademarks</h3>
+            <p className="text-sm text-gray-300">Track trademark status and legal updates.</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
+            <h3 className="text-lg font-semibold text-indigo-200">Export Reports</h3>
+            <p className="text-sm text-gray-300">Download insights in PDF, XML, JSON formats.</p>
+          </div>
+        </div>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-12">
           <button
             onClick={() => navigate("/register")}
             className="px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium
-                       transition-all duration-300
-                       hover:bg-indigo-700
-                       hover:-translate-y-1
-                       hover:shadow-2xl hover:shadow-indigo-500/40
-                       active:scale-95"
+                       transition-all duration-300 hover:bg-indigo-700 hover:-translate-y-1
+                       hover:shadow-2xl hover:shadow-indigo-500/40 active:scale-95"
           >
             Get Started
           </button>
-
-          {/* Login Now Button */}
           <button
             onClick={() => navigate("/login")}
             className="px-8 py-3 border border-white text-white rounded-lg font-medium
-                       transition-all duration-300
-                       hover:bg-white hover:text-black
-                       hover:-translate-y-1
-                       hover:shadow-xl
-                       active:scale-95"
+                       transition-all duration-300 hover:bg-white hover:text-black
+                       hover:-translate-y-1 hover:shadow-xl active:scale-95"
           >
             Login Now
           </button>
@@ -141,8 +135,13 @@ export default function Landing() {
       </div>
 
       {/* ================= FOOTER ================= */}
-      <footer className="relative z-10 w-full bg-indigo-800 text-white text-center py-4">
-        © 2026 Global IP Intelligence Platform | All Rights Reserved
+      <footer className="relative z-10 w-full bg-indigo-800 text-white text-center py-6">
+        <div className="flex flex-col sm:flex-row justify-center gap-6 mb-2">
+          <button className="hover:text-indigo-300 transition">Privacy Policy</button>
+          <button className="hover:text-indigo-300 transition">Terms of Use</button>
+          <button className="hover:text-indigo-300 transition">Contact</button>
+        </div>
+        <p className="text-sm">© 2026 Global IP Intelligence Platform | All Rights Reserved</p>
       </footer>
     </div>
   );
