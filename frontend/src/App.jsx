@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import DetailPage from "./Pages/DetailPage";
+
 import Profile from "./Pages/Profile";
 import LandingPage from "./Pages/LandingPage";
 import Login from "./Pages/Login";
@@ -24,6 +25,14 @@ import AnalystExportPage from "./Pages/Analyst/AnalystExportPage";
 /* 🔥 NEW DETAIL PAGE */
 import PatentDetailPage from "./Pages/Analyst/PatentDetailPage";
 
+
+
+import UserLayout from "./Pages/User/UserLayout";
+import UserDashboardPage from "./Pages/User/UserDashboardPage";
+import UserSearchPage from "./Pages/User/UserSearchPage";
+import UserWatchlistPage from "./Pages/User/UserWatchlistPage";
+import UserHistoryPage from "./Pages/User/UserHistoryPage";
+import UserPatentDetailPage from "./Pages/User/UserPatentDetailPage"
 export default function App() {
 
   useEffect(() => {
@@ -71,7 +80,28 @@ export default function App() {
 
         </Route>
 
+
+       
+
+<Route path="/user" element={<UserLayout/>}>
+
+  <Route index element={<UserDashboardPage/>}/>
+  <Route path="dashboard" element={<UserDashboardPage/>}/>
+  <Route path="search" element={<UserSearchPage/>}/>
+  <Route path="watchlist" element={<UserWatchlistPage/>}/>
+  <Route path="history" element={<UserHistoryPage/>}/>
+
+  {/* IMPORTANT */}
+  <Route path="patent/:lensId" element={<UserPatentDetailPage/>}/>
+
+  <Route path="profile" element={<Profile/>}/>
+
+</Route>
       </Routes>
+
+        
+        
+
 
 
       {/* TOAST */}

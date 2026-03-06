@@ -1,304 +1,411 @@
-import { useEffect, useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
 
-const STATUS_COLORS = {
-  ACTIVE: "bg-green-600",
-  PENDING: "bg-yellow-500",
-  GRANTED: "bg-blue-600",
-  DISCONTINUED: "bg-red-600",
-};
+import {
+  LayoutDashboard,
+  Search,
+  User,
+  Bookmark,
+  History,
+  BarChart3,
+  FileText,
+  ShieldCheck,
+  Plus,
+  Eye,
+  Clock,
+  Bot,
+  LogOut,
+  ChevronRight,
+  Star,
+  X,
+  Bell,
+  Search as SearchIcon
+} from "lucide-react";
 
-export default function UserDashboard() {
-  const navigate = useNavigate();
+import { motion, AnimatePresence } from "framer-motion";
 
-  /* ── Restore saved search state from sessionStorage ── */
-  const saved = (() => {
-    try { return JSON.parse(sessionStorage.getItem("user_search_state") || "null"); }
-    catch { return null; }
-  })();
+function Badge({ children }) {
 
-  const [user, setUser] = useState(null);
-  const [results, setResults] = useState(saved?.results || []);
-  const [total, setTotal] = useState(saved?.total ?? null);
-  const [searched, setSearched] = useState(saved?.searched || false);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(saved?.page || 0);
-
-  const [keyword, setKeyword] = useState(saved?.keyword || "");
-  const [jurisdiction, setJurisdiction] = useState(saved?.jurisdiction || "");
-  const [inventor, setInventor] = useState(saved?.inventor || "");
-  const [assignee, setAssignee] = useState(saved?.assignee || "");
-  const [status, setStatus] = useState(saved?.status || "");
-
-  const token = localStorage.getItem("accessToken");
-  const role = localStorage.getItem("role");
-
-  /* ── Auth check ─────────────────────────────────────────────── */
-  useEffect(() => {
-    if (!token || role !== "USER") {
-      navigate("/login");
-      return;
-    }
-    fetchUser();
-  }, []);
-
-  const fetchUser = async () => {
-    try {
-      const res = await api.get("/api/user/me");
-      setUser(res.data);
-    } catch {
-      localStorage.clear();
-      navigate("/login");
-    }
-  };
-
-  /* ── Search ──────────────────────────────────────────────────── */
-  const handleSearch = async (overridePage = 0) => {
-    if (!keyword.trim()) return;
-    setLoading(true);
-    setSearched(true);
-    setPage(overridePage);
-    try {
-      const params = new URLSearchParams({
-        q: keyword.trim(),
-        type: "PATENT",
-        page: overridePage,
-        size: 10,
-      });
-      if (jurisdiction) params.set("jurisdiction", jurisdiction);
-
-      const res = await api.get("/api/search", { params });
-      setResults(res.data.results || []);
-      setTotal(res.data.total ?? null);
-    } catch (err) {
-      console.error("Search error:", err);
-      setResults([]);
-    }
-    setLoading(false);
-  };
-
-  const handleClear = () => {
-    setKeyword("");
-    setJurisdiction("");
-    setInventor("");
-    setAssignee("");
-    setStatus("");
-    setResults([]);
-    setSearched(false);
-    setTotal(null);
-    setPage(0);
-    sessionStorage.removeItem("user_search_state");
-  };
-
-  /* ── Save search state to sessionStorage whenever results change ── */
-  useEffect(() => {
-    if (results.length > 0) {
-      sessionStorage.setItem("user_search_state", JSON.stringify({
-        keyword, jurisdiction, inventor, assignee, status, page, results, total, searched
-      }));
-    }
-  }, [results]);
-
-  /* ── Client-side filter on top of API results ── */
-  const filteredResults = results.filter(r =>
-    (inventor === "" || r.inventors?.some(i => i.toLowerCase().includes(inventor.toLowerCase()))) &&
-    (assignee === "" || r.applicants?.some(a => a.toLowerCase().includes(assignee.toLowerCase()))) &&
-    (status === "" || r.patentStatus === status)
+  return (
+    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold border uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+      {children}
+    </span>
   );
 
-  /* ── Unique statuses from current results ── */
-  const uniqueStatuses = [...new Set(results.map(r => r.patentStatus).filter(Boolean))].sort();
+}
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+function StatCard({ title, value, icon: Icon }) {
+
+  return (
+
+    <motion.div
+      whileHover={{ y: -4 }}
+      className="bg-slate-900/50 border border-white/5 p-5 rounded-2xl backdrop-blur-sm"
+    >
+
+      <div className="flex justify-between items-start mb-4">
+
+        <div className="p-2 bg-indigo-500/10 rounded-lg">
+          <Icon className="w-5 h-5 text-indigo-400" />
+        </div>
+
+      </div>
+
+      <p className="text-slate-400 text-sm font-medium mb-1">
+        {title}
+      </p>
+
+      <p className="text-2xl font-bold tracking-tight">
+        {value}
+      </p>
+
+    </motion.div>
+
+  );
+
+}
+
+export default function UserDashboard() {
+  return <DashboardContent />;
+}
+
+function DashboardContent() {
+
+  const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState("dashboard");
+
+  const [keyword, setKeyword] = useState("");
+
+  const [assets, setAssets] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [selectedAsset, setSelectedAsset] = useState(null);
+
+  const [savedAssets, setSavedAssets] = useState([]);
+
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+
+    setUser({
+      username: "Sai",
+      email: "sai@ipnexus.com",
+      role: "User",
+      avatar: "https://picsum.photos/seed/sai/100/100",
+    });
+
+  }, []);
+
+  useEffect(() => {
+
+    fetchAssets();
+
+  }, []);
+
+  const fetchAssets = async () => {
+
+    setLoading(true);
+
+    try {
+
+      const response = await axios.get(
+        "http://localhost:8081/api/search",
+        {
+          params: {
+            q: "artificial intelligence",
+            type: "PATENT",
+            page: 0,
+            size: 20
+          }
+        }
+      );
+
+      setAssets(response.data.results || []);
+
+    } catch (error) {
+
+      console.error("API Error:", error);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
   };
+
+  const filteredAssets = useMemo(() => {
+
+    return assets.filter(asset => {
+
+      return asset.title
+        ?.toLowerCase()
+        .includes(keyword.toLowerCase());
+
+    });
+
+  }, [keyword, assets]);
+
+  const toggleSaveAsset = (asset) => {
+
+    const exists = savedAssets.find(a => a.lensId === asset.lensId);
+
+    if (exists)
+      setSavedAssets(savedAssets.filter(a => a.lensId !== asset.lensId));
+    else
+      setSavedAssets([...savedAssets, asset]);
+
+  };
+
+  const sidebarItems = [
+
+    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+
+    { id: "search", label: "Patent Search", icon: Search },
+
+    { id: "assets", label: "My Portfolio", icon: FileText },
+
+    { id: "saved", label: "Watchlist", icon: Bookmark },
+
+    { id: "analytics", label: "Insights", icon: BarChart3 },
+
+    { id: "profile", label: "Profile", icon: User },
+
+  ];
 
   if (!user) return <div className="text-white p-10">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white px-4 md:px-10 py-10">
 
-      {/* ── HEADER ── */}
-      <div className="flex justify-between items-center mb-10 flex-wrap gap-4">
-        <h1 className="text-3xl font-bold text-indigo-400">
-          Welcome, {user.username}
-        </h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg shadow transition"
-        >
-          Logout
-        </button>
-      </div>
+    <div className="flex h-screen bg-black text-white">
 
-      {/* ── SEARCH BAR ── */}
-      <div className="bg-slate-800 p-6 rounded-2xl mb-8 shadow-xl">
-        <h3 className="text-lg font-semibold text-indigo-400 mb-4">
-          Search Patents
-        </h3>
+      {/* SIDEBAR */}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input
-            type="text"
-            placeholder="Keyword (e.g. artificial intelligence)"
-            value={keyword}
-            onChange={e => setKeyword(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSearch(0)}
-            className="bg-slate-700 p-2 rounded col-span-1 md:col-span-2"
-          />
+      <aside className="w-64 bg-slate-950 border-r border-white/5 flex flex-col">
 
-          <select
-            value={jurisdiction}
-            onChange={e => setJurisdiction(e.target.value)}
-            className="bg-slate-700 p-2 rounded"
-          >
-            <option value="">All Jurisdictions</option>
-            <option value="US">US</option>
-            <option value="IN">IN</option>
-            <option value="CN">CN</option>
-            <option value="EP">EP</option>
-            <option value="WO">WO (PCT)</option>
-            <option value="KR">KR</option>
-            <option value="JP">JP</option>
-            <option value="DE">DE</option>
-            <option value="GB">GB</option>
-          </select>
-        </div>
+        <div className="p-6">
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <input
-            type="text"
-            placeholder="Inventor (e.g. John Doe)"
-            value={inventor}
-            onChange={e => setInventor(e.target.value)}
-            className="bg-slate-700 p-2 rounded"
-          />
-          <input
-            type="text"
-            placeholder="Assignee (e.g. Google)"
-            value={assignee}
-            onChange={e => setAssignee(e.target.value)}
-            className="bg-slate-700 p-2 rounded"
-          />
-          <select
-            value={status}
-            onChange={e => setStatus(e.target.value)}
-            className="bg-slate-700 p-2 rounded"
-          >
-            <option value="">All Statuses</option>
-            {uniqueStatuses.map(s => (
-              <option key={s} value={s}>{s}</option>
+          <div className="flex items-center gap-3 mb-10">
+
+            <ShieldCheck className="w-6 h-6 text-indigo-400" />
+
+            <h2 className="text-xl font-bold">User</h2>
+
+          </div>
+
+          <nav className="space-y-1">
+
+            {sidebarItems.map(({ id, label, icon: Icon }) => (
+
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm ${
+                  activeTab === id
+                    ? "bg-indigo-600"
+                    : "text-slate-400 hover:bg-white/5"
+                }`}
+              >
+
+                <Icon className="w-4 h-4" />
+
+                {label}
+
+              </button>
+
             ))}
-          </select>
+
+          </nav>
+
         </div>
 
-        <div className="flex gap-4 mt-4">
+        <div className="mt-auto p-6 border-t border-white/5">
+
+          <div className="flex items-center gap-3 mb-6">
+
+            <img
+              src={user.avatar}
+              className="w-10 h-10 rounded-full"
+            />
+
+            <div>
+
+              <p className="text-sm font-bold">
+                {user.username}
+              </p>
+
+              <p className="text-xs text-slate-500">
+                {user.role}
+              </p>
+
+            </div>
+
+          </div>
+
           <button
-            onClick={() => handleSearch(0)}
-            disabled={loading || !keyword.trim()}
-            className="bg-indigo-600 px-6 py-2 rounded hover:bg-indigo-700 disabled:opacity-50 transition"
+            onClick={() => navigate("/login")}
+            className="flex items-center gap-2 w-full bg-white/5 hover:bg-red-500/20 py-2 rounded-xl"
           >
-            {loading ? "Searching…" : "Search"}
+
+            <LogOut className="w-4 h-4" />
+
+            Logout
+
           </button>
-          <button
-            onClick={handleClear}
-            className="border border-gray-500 px-6 py-2 rounded hover:bg-slate-700 transition"
-          >
-            Clear
-          </button>
+
         </div>
-      </div>
 
-      {/* ── STATES ── */}
-      {!searched && (
-        <p className="text-gray-500 text-center">
-          Enter a keyword and click Search to find patents.
-        </p>
-      )}
+      </aside>
 
-      {searched && !loading && results.length === 0 && (
-        <p className="text-gray-400 text-center">No patents found.</p>
-      )}
+      {/* MAIN */}
 
-      {/* ── RESULTS ── */}
-      {results.length > 0 && (
-        <>
-          <p className="text-gray-400 text-sm mb-4">
-            {total !== null
-              ? `Showing ${(page * 10 + 1).toLocaleString()}–${(page * 10 + filteredResults.length).toLocaleString()} of ${total.toLocaleString()} total patents`
-              : `Showing ${filteredResults.length} results`}
+      <main className="flex-1 overflow-y-auto">
+
+        <header className="h-16 border-b border-white/5 flex items-center justify-between px-8">
+
+          <p className="capitalize">
+            {activeTab}
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {filteredResults.map(r => (
-              <div
-                key={r.lensId}
-                className="bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:border-indigo-500 border border-transparent transition"
-              >
-                {/* Type badge */}
-                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                  <span className="text-xs bg-indigo-800 text-indigo-300 px-2 py-0.5 rounded">
-                    {r.publicationType?.replace("_", " ")}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded text-white ${STATUS_COLORS[r.patentStatus] || "bg-gray-600"}`}>
-                    {r.patentStatus}
-                  </span>
-                </div>
+          <Bell className="w-5 h-5 text-slate-400" />
 
-                <h3 className="text-indigo-400 font-semibold text-base mb-3 line-clamp-2">
-                  {r.title}
-                </h3>
+        </header>
 
-                <p className="text-xs text-gray-400 mb-1">
-                  <span className="text-gray-300">Applicant:</span>{" "}
-                  {r.applicants?.join(", ") || "N/A"}
-                </p>
-                <p className="text-xs text-gray-400 mb-1">
-                  <span className="text-gray-300">Inventor:</span>{" "}
-                  {r.inventors?.join(", ") || "N/A"}
-                </p>
-                <p className="text-xs text-gray-400 mb-3">
-                  <span className="text-gray-300">Jurisdiction:</span> {r.jurisdiction} &nbsp;|&nbsp;
-                  <span className="text-gray-300">Published:</span> {r.datePublished}
-                </p>
+        <div className="p-8">
 
-                <button
-                  onClick={() =>
-                    navigate(`/assets/${r.lensId}`, { state: { from: "USER" } })
-                  }
-                  className="bg-indigo-600 px-4 py-1.5 rounded hover:bg-indigo-700 text-sm transition"
-                >
-                  View Details →
-                </button>
+          {activeTab === "dashboard" && (
+
+            <div className="grid grid-cols-4 gap-6">
+
+              <StatCard
+                title="Total Patents"
+                value={assets.length}
+                icon={FileText}
+              />
+
+              <StatCard
+                title="Active"
+                value={assets.filter(a => a.patentStatus === "ACTIVE").length}
+                icon={ShieldCheck}
+              />
+
+              <StatCard
+                title="Pending"
+                value={assets.filter(a => a.patentStatus === "PENDING").length}
+                icon={Clock}
+              />
+
+              <StatCard
+                title="Discontinued"
+                value={assets.filter(a => a.patentStatus === "DISCONTINUED").length}
+                icon={Plus}
+              />
+
+            </div>
+
+          )}
+
+          {activeTab === "search" && (
+
+            <div className="space-y-6">
+
+              <input
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="Search patent..."
+                className="w-full bg-slate-900 border border-white/10 rounded-xl p-3"
+              />
+
+              {loading && <p>Loading...</p>}
+
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+                {filteredAssets.map(asset => (
+
+                  <div
+                    key={asset.lensId}
+                    className="bg-slate-900 border border-white/10 p-6 rounded-xl"
+                  >
+
+                    <Badge>{asset.patentStatus}</Badge>
+
+                    <h3 className="font-bold mt-2">
+                      {asset.title}
+                    </h3>
+
+                    <p className="text-xs text-slate-400">
+                      {asset.applicants?.[0]} • {asset.jurisdiction}
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                      {asset.datePublished}
+                    </p>
+
+                    <button
+                      onClick={() => setSelectedAsset(asset)}
+                      className="mt-4 text-indigo-400 text-sm"
+                    >
+                      Details
+                    </button>
+
+                  </div>
+
+                ))}
+
               </div>
-            ))}
-          </div>
 
-          {/* ── PAGINATION ── */}
-          <div className="flex justify-center items-center gap-4">
-            <button
-              disabled={page === 0 || loading}
-              onClick={() => handleSearch(page - 1)}
-              className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-40 transition"
+            </div>
+
+          )}
+
+        </div>
+
+      </main>
+
+      {/* MODAL */}
+
+      <AnimatePresence>
+
+        {selectedAsset && (
+
+          <motion.div
+            className="fixed inset-0 bg-black/80 flex items-center justify-center"
+            onClick={() => setSelectedAsset(null)}
+          >
+
+            <motion.div
+              className="bg-slate-900 p-8 rounded-xl max-w-xl"
+              onClick={(e) => e.stopPropagation()}
             >
-              ← Prev
-            </button>
-            <span className="px-4 py-2 text-gray-300 font-medium">
-              Page {page + 1}
-              {total !== null && ` of ${Math.ceil(total / 10).toLocaleString()}`}
-            </span>
-            <button
-              disabled={results.length < 10 || loading}
-              onClick={() => handleSearch(page + 1)}
-              className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-40 transition"
-            >
-              Next →
-            </button>
-          </div>
-        </>
-      )}
+
+              <h2 className="text-2xl font-bold mb-4">
+                {selectedAsset.title}
+              </h2>
+
+              <p className="text-sm text-slate-400 mb-4">
+                {selectedAsset.abstract}
+              </p>
+
+              <button
+                onClick={() => setSelectedAsset(null)}
+                className="mt-4 bg-indigo-600 px-4 py-2 rounded"
+              >
+                Close
+              </button>
+
+            </motion.div>
+
+          </motion.div>
+
+        )}
+
+      </AnimatePresence>
+
     </div>
+
   );
+
 }
