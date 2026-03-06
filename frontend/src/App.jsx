@@ -11,7 +11,7 @@ import Profile from "./Pages/Profile";
 import LandingPage from "./Pages/LandingPage";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
-import UserDashboard from "./Pages/UserDashboard";
+// import UserDashboardPage  from "./Pages/UserDashboardPage ";
 import AdminDashboard from "./Pages/AdminDashboard";
 
 /* 🔥 ANALYST STRUCTURE */
@@ -54,7 +54,7 @@ export default function App() {
 
         <Route path="/register" element={<Register />} />
 
-        <Route path="/user" element={<UserDashboard />} />
+        <Route path="/user" element={<UserDashboardPage />} />
 
         <Route path="/admin" element={<AdminDashboard />} />
 
